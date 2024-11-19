@@ -7,6 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: check 
-        - run: ls -R
+        run: ls -R
       - name: build
-        - run: cargo run --release  
+        run: cargo run --release  

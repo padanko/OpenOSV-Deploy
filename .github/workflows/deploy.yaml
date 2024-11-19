@@ -6,5 +6,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: dir
-      - run: cargo run --release
+      - name: check 
+        - run: ls -R
+      - name: build
+        - run: cargo run --release  

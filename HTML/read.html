@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - OpenOSV</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div id="status-bar">正常</div>
+    <div style="margin:20px;">
+        <div style="position:fixed; top:50vh; bottom: 50vh; right:1vw; display: flex; flex-direction: column;">
+            <a href="#title__" class="button-upanddown">▲</a>
+            <a href="#form__" class="button-upanddown">▼</a>
+        </div>
+        <div id="thr">
+            <h1 style="color:red" id="title__">{{ title }}</h1>
+            {% for response in com %}
+            <dl class="wrap-thr" id='r{{ loop.index }}'>
+                <dt><a class="reply-button" onclick="reply('{{ loop.index }}')">{{ loop.index }}</a>: <b style="color: green">{{ response.name }}</b>, {{ response.date }}, ID: {{ response.id }}{% if response.id == admin_id %}<small style="color:red">主</small>{% endif %}</dt>
+                <dd>{{ response.text | safe }}</dd>
+            </dl>
+            {% endfor %}
+        </div>
+        <hr>
+        <button class="btn-color-1" id="bookmark">🔖ブックマーク</button>
+        <hr>
+        <div id="form__">
+            お名前: <input type="text" id="name" name="name"><br><br>
+            <textarea style="width: 100%; height:150px" id="text" name="text" placeholder="本文"></textarea>
+            <button id="submit" style="width: 100%; height:50px;">投稿</button>
+        </div>
+        <span class="spacer">OpenOSV v0.1.4</span>
+    </div>
+    <div class="bottom-nav">
+        <a href="/">🏡ホーム</a>
+        <a href="/#dataform">🔨スレッドを作成</a>
+        <a href="/history">📗履歴</a>
+    </div>
+</body>
+<form action="/Post/Response" id="PostURL"></form>
+<a href="/poll/{{ thrid }}" id="GetURL"></a>
+<audio src="/static/notify.wav" id="notify_audio"></audio>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/jquery.cookie.min.js"></script>
+<script>
+
+    function close_statusbar() {
+        i = setInterval(()=>{
+            $("#status-bar").fadeOut();
+            clearInterval(i);
+        }, 800);
+    }
+
+
+    function open_statusbar() {
+        $("#status-bar").slideDown(150);
+    }
+
+    $("#status-bar").hide();
+
+    var notify_audio = document.getElementById("notify_audio");
+    $("#submit").click(() => {
+        
+        name = $("#name").val();
+        text = $("#text").val();
+        $.ajax({
+            url: $("#PostURL")[0].action,
+            type: "POST",
+            dataType: 'text',
+            data: {
+                thrid: "{{ thrid }}",
+                text: text,
+                name: name
+            },
+            success: (c) => {
+                if (!$.cookie("bookmark")) {
+                    $.cookie("bookmark", "", {path: "/"})
+                }
+                var bookmarks = $.cookie("bookmark").split(" ")
+                if (!bookmarks.includes("{{ thrid }}")) {
+                    bookmarks.push("{{ thrid }}")
+                }
+                $.cookie("bookmark", bookmarks.join(" "), {path: "/"})
+
+                if (c == "SUC") {
+                    console.log("成功");
+                    open_statusbar()
+                    $("#status-bar")[0].style.backgroundColor = "#55dd88"
+                    $("#status-bar").text("成功")
+                    $("#text").val("");
+                    close_statusbar()
+                } else if (c == "ERR3") {
+                    open_statusbar()
+                    $("#status-bar")[0].style.backgroundColor = "#ff5500"
+                    $("#status-bar").text("BANされています");
+                    close_statusbar()
+                    
+                } else if (c == "ERR3") {
+                    open_statusbar()
+                    $("#status-bar")[0].style.backgroundColor = "#ff5500"
+                    $("#status-bar").text("スレッドが存在しません");
+                    close_statusbar()
+                } else {
+                    open_statusbar()
+                    $("#status-bar")[0].style.backgroundColor = "#ff5500"
+                    $("#status-bar").text("サーバーエラー");
+                    close_statusbar()
+                }
+            }, error: (e) => {
+                open_statusbar()
+                $("#status-bar")[0].style.backgroundColor = "#ff5500"
+                $("#status-bar").text("接続エラー");
+                close_statusbar()
+            }
+        })
+    })
+
+    function reply(c) {
+        $("#text").val(">>"+c+"\n"+$("#text").val())
+    }
+
+    $("#bookmark").click(()=>{
+        if (!$.cookie("bookmark")) {
+            $.cookie("bookmark", "", {path: "/"})
+        }
+        var bookmarks = $.cookie("bookmark").split(" ")
+        if (!bookmarks.includes("{{ thrid }}")) {
+            bookmarks.push("{{ thrid }}")
+        } else {
+            bookmarks = bookmarks.filter(thrid => thrid != "{{ thrid }}")
+        }
+        $.cookie("bookmark", bookmarks.join(" "), {path: "/"})
+    })
+
+    function poll() {
+        fetch($("#GetURL")[0].href)
+            .then(d => d.json())
+            .then((d) => {
+                console.log(d)
+                notify_audio.pause();
+                notify_audio.currentTime=0;
+                notify_audio.play();
+                dl = document.createElement("dl")
+                dl.innerHTML = `<dt id="r${document.getElementById("thr").querySelectorAll("dl").length + 1}"><a class="reply-button" onclick="reply('${document.getElementById("thr").querySelectorAll("dl").length + 1}')">${document.getElementById("thr").querySelectorAll("dl").length + 1}</a>: <b style="color: green">${d.name}</b>, ${d.date}, ID: ${d.id}</dt><dd>${d.text}</dd>`
+                document.getElementById("thr").appendChild(dl);
+                poll()
+            }).catch((d) => {
+                poll()
+            })
+    }
+
+    poll()
+</script>
+
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>履歴</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body style="background-color:#efefef; padding:10px;">
+    <div style="position:fixed; top:35vh; right:1vw; display: flex; flex-direction: column;">
+        <a href="#title__" class="button-upanddown">▲</a>
+        <a href="#form__" class="button-upanddown">▼</a>
+    </div>
+    <div style="color:white; background-color: rgba(0,0,0,0.7); padding-left: 20px; border-radius: 12px;">
+        <h1>📗履歴</h1>
+        <p>あなたが「ブックマーク」したり、書き込んだりしたスレッドが表示されます。</p>
+        <p style="font-size: small;">30秒ごとに更新します。</p>
+    </div>
+    <div style="color:white; background-color: rgba(0,0,0,0.7); padding-left: 20px; border-radius: 12px;">
+        <ul style="background-color: rgba(100,100,100,0.5);margin:2px;" id="bookmark-lists">
+
+        </ul>
+    </div>
+    <div class="bottom-nav">
+        <a href="/">🏡ホーム</a>
+        <a href="/#dataform">🔨スレッドを作成</a>
+        <a href="/history">📗履歴</a>
+    </div>
+</body>
+<a href="/api/tgJSON/REPLACEYSDBWJSWHDHDIW" id="base"></a> <!-- プロキシで使う人用　置き換えるマジックナンバー -->
+<script src="/static/jquery.min.js"></script>
+<script src="/static/jquery.cookie.min.js"></script>
+<script>
+    const base = $("#base")[0].href
+    var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
+    document.getElementById("bookmark-lists").innerHTML = "";
+    var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
+    for (let i = 0; i < bookmark.length; i++) {
+        if (bookmark[i] != "") { // なぜか最初に余計なものが入り込むことがあるので
+            var thrid = bookmark[i];
+            var url = base.replace("REPLACEYSDBWJSWHDHDIW", thrid);
+            fetch(url).then(json => json.json()).then((json) => {
+                item = document.createElement("li")
+                link = document.createElement("a")
+                link.href = `/thread/${json.id}`
+                link.classList = ["history-a"]
+                link.innerText = `${json.title}`
+                len = document.createElement("small")
+                len.innerText = `(${json.len})`
+                item.appendChild(link);
+                item.appendChild(len);
+                document.getElementById("bookmark-lists").appendChild(item)
+
+            })
+        }
+
+    }
+    setInterval(() => {
+        document.getElementById("bookmark-lists").innerHTML = "";
+        var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
+        for (let i = 0; i < bookmark.length; i++) {
+            if (i > 0) { // なぜか最初に余計なものが入り込むことがあるので
+                var thrid = bookmark[i];
+                var url = base.replace("REPLACEYSDBWJSWHDHDIW", thrid);
+                fetch(url).then(json => json.json()).then((json) => {
+                    item = document.createElement("li")
+                    link = document.createElement("a")
+                    link.href = `/thread/${json.id}`
+                    link.classList = ["history-a"]
+                    link.innerText = `${json.title}`
+                    len = document.createElement("small")
+                    len.innerText = `(${json.len})`
+                    item.appendChild(link);
+                    item.appendChild(len);
+                    document.getElementById("bookmark-lists").appendChild(item)
+
+                })
+            }
+
+        }
+    }, 30000);
+
+</script>
+
+</html>

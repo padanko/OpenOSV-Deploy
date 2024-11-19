@@ -1,0 +1,9 @@
+name: OpenOSV Deploy
+
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: cargo run --release

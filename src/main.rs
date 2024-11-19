@@ -367,7 +367,7 @@ async fn main() -> std::io::Result<()> {
             .route("/api/tgJSON/{thrID}", web::get().to(ev_api_thread_get_tojson))
             .service(fs_actix::Files::new("/static", "./static").show_files_listing())
     })
-    .bind("0.0.0.0:80")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
